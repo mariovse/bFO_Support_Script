@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        L3 bFO Extras
+// @name        L3 bFO Extras2
 // @namespace   Violentmonkey Scripts
 // @match       https://*.force.com/*
 // @grant       none
@@ -26,7 +26,6 @@ const isEnable = { // an object specifying which features are enabled
 const daysWithoutUpdate = [15, 20, 25, 30, 35]; // an array of numbers representing the number of days since the last update that trigger highlighting in certain situations
 const escalationHours = [24, 48, 72, 96, 115, 120]; // an array of numbers representing the number of hours since escalation that trigger highlighting in certain situations
 const lastcustomerHours = [0, 48, 24, 180]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
-const lastcustomerHours2 = [0, 48, 24, 180]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for ENG/BU cases)
 
 //Colors
 var colors = {
@@ -46,6 +45,7 @@ var colors = {
 	gradient4Color: '#ffbca4',
 	gradient5Color: '#ffa8a8',
 }
+
 // This function initiates the highlighting of table rows and sets up a mutation observer to monitor changes to the DOM and update the highlighting accordingly.
 function start() {
 	updateHighlighting();
@@ -56,7 +56,11 @@ function start() {
 function updateHighlighting() {
 
 	var now = new Date(); //Current Date
-
+	//ColorAndText set
+	const setColorAndText = (col, text, color) => {
+		tableRows[i + col].style.backgroundColor = color;
+		tableRows[i + col].textContent = text;
+	}
 	// Find table, header and rows
 	// Store the entire table, header and rows for reference
 	var table = document.querySelector('.slds-table');
@@ -106,15 +110,9 @@ function updateHighlighting() {
 		for (var i = 0; i < tableRows.length; i += tableHeader.length) {
 			for (var j = 0; j < tableHeader.length; j++) {
 
-				const setColorAndText = (col, text, color) => {
-					tableRows[i + col].style.backgroundColor = color;
-					tableRows[i + col].textContent = text;
-				}
-
-				let isExpert = tableRows[i + actionNeededFCol].innerHTML.match('Expert*');
+				/////////////////////////////////////Internal variables
+				////////////////////////////////////
 				let isEngineeringBU = tableRows[i + actionNeededFCol].innerHTML.match('Engineering/BU*');
-				let isCustomer = tableRows[i + actionNeededFCol].innerHTML.match('Customer*');
-				let isAdvanced = tableRows[i + actionNeededFCol].innerHTML.match('Advanced*');
 
 				let lastCustEmailDate = new Date(Date.parse(getConvertedDateTime(dateFormatType, tableRows[i + lastCusEmailCol].textContent)));
 				let lastReplyEmailDate = new Date(Date.parse(getConvertedDateTime(dateFormatType, tableRows[i + lastReply2CusCol].textContent)));
@@ -134,29 +132,31 @@ function updateHighlighting() {
 				let timeSinceLastResponseHM = hoursAndMinutes(timeSinceLastResponseNoWK);
 				let timeSinceLastModResponseHM = hoursAndMinutes(timeSinceLastModResponseNoWK);
 				let timeSinceLastReplyHM = hoursAndMinutes(timeSinceLastReplyNoWK);
+				/////////////////////////////////////
+				/////////////////////////////////////
 
+				//If for updates
 				if (!isNaN(lastReplyEmailDate) && !isNaN(lastCustEmailDate)) {
-					if (isExpert || isCustomer || isAdvanced) {
-						if (isEnable.newEmail == true && timeReplyResponseDif <= lastcustomerHours[0] && timeSinceLastResponse <= lastcustomerHours[1] && !tableRows[i + statusCol].innerHTML.match('Answer*')) {
-							setColorAndText(blankCol, `${timeSinceLastResponseHM} ago last customer email`, colors.green1Color)
-						} else if (isEnable.daysWithoutSendingEmail == true && timeReplyResponseDif <= lastcustomerHours[0] && timeSinceLastResponse > lastcustomerHours[2] && timeSinceLastResponse <= lastcustomerHours[3]) {
-							setColorAndText(blankCol, `${timeSinceLastResponseHM} without sending an email`, colors.gray1Color)
-						} else if (isEnable.daysWithoutFeedback == true && timeReplyResponseDif >= lastcustomerHours[0] && timeSinceLastCustReply > lastcustomerHours[2] && timeSinceLastCustReply <= lastcustomerHours[3]) {
-							setColorAndText(blankCol, `${timeSinceLastReplyHM} without feedback from customer`, colors.purple1Color)
-						}
-					} else if (isEngineeringBU) {
-						if (isEnable.newEmail == true && timeReplyResponseDif <= lastcustomerHours2[0] && timeSinceLastResponse <= lastcustomerHours2[1]) {
-							setColorAndText(blankCol, `${timeSinceLastResponseHM} ago last customer email`, colors.green1Color)
-						}
+					if (isEnable.newEmail == true && timeReplyResponseDif <= lastcustomerHours[0] && timeSinceLastResponse <= lastcustomerHours[1] && !tableRows[i + statusCol].innerHTML.match('Answer*')) {
+						setColorAndText(blankCol, `${timeSinceLastResponseHM} ago last customer email`, colors.green1Color)
+					} else if (isEnable.daysWithoutSendingEmail == true && timeReplyResponseDif <= lastcustomerHours[0] && timeSinceLastResponse > lastcustomerHours[2] && timeSinceLastResponse <= lastcustomerHours[3]) {
+						setColorAndText(blankCol, `${timeSinceLastResponseHM} without sending an email`, colors.gray1Color)
+					} else if (isEnable.daysWithoutFeedback == true && timeReplyResponseDif >= lastcustomerHours[0] && timeSinceLastCustReply > lastcustomerHours[2] && timeSinceLastCustReply <= lastcustomerHours[3]) {
+						setColorAndText(blankCol, `${timeSinceLastReplyHM} without feedback from customer`, colors.purple1Color)
 					}
-				} else if (isEnable.firstPending == true && lastReplyEmailDate == 'Invalid Date' && isExpert && timeSinceLastResponseNoWK < 72) {
+				}
+
+				//1st response pending only shown for 72 hours.
+				if (isEnable.firstPending == true && lastReplyEmailDate == 'Invalid Date' && timeSinceLastResponseNoWK < 72) {
 					setColorAndText(blankCol, '1st response pending', colors.red1Color)
 				}
 
+				//If for last person
 				if (isEnable.lastUpdateBy == true && lastModifiedAlias != myBfoAlias && lastModifiedAlias != 'syinterf' && lastModifiedAlias != '') {
 					setColorAndText(caseNumberCol, `${timeSinceLastModResponseHM} ago by ${lastModifiedAlias}`, colors.green2Color)
 				}
 
+				//If for days since last update
 				if (isEnable.lastCaseUpdate == true && !isNaN(lastModifiedDate) && isEngineeringBU) {
 					var timeLeft = Math.round((now - lastModifiedDate) / 86400000);
 					if (timeLeft >= daysWithoutUpdate[4]) {
@@ -173,7 +173,7 @@ function updateHighlighting() {
 				}
 
 				// Checks conditions to determine which color and text should be displayed based on the value of "expertAgeValue" and certain other variables.
-				if (isEnable.tarFive == true && !isNaN(expertAgeValue) && isExpert || isCustomer || isAdvanced) {
+				if (isEnable.tarFive == true && !isNaN(expertAgeValue) && !isEngineeringBU) {
 					if (expertAgeValue > escalationHours[5]) {
 						setColorAndText(0, 'Expired', colors.gray1Color)
 					} else if (expertAgeValue >= escalationHours[3] && expertAgeValue <= escalationHours[5]) {
