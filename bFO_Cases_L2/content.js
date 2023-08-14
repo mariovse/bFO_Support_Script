@@ -4,9 +4,9 @@
 // @match       https://*.force.com/*
 // @grant       none
 // @run-at document-idle
-// @version     2.0
+// @version     2.3
 // @author      MarioV
-// @description 2/15/2023, 7:36:29 AM
+// @description 8/14/2023
 // ==/UserScript==
 
 //Variables & constants
@@ -25,7 +25,7 @@ const isEnable = { // an object specifying which features are enabled
 
 const daysWithoutUpdate = [15, 20, 25, 30, 35]; // an array of numbers representing the number of days since the last update that trigger highlighting in certain situations
 const escalationHours = [0, 24, 48, 96, 115, 120]; // an array of numbers representing the number of hours since escalation that trigger highlighting in certain situations
-const lastcustomerHours = [0, 48, 24, 180]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
+const lastcustomerHours = [0, 48, 24, 1460]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
 
 //Colors
 var colors = {
