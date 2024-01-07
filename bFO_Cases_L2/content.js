@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name        L3 bFO Extras2
+// @name        L2 bFO Extras
 // @namespace   Violentmonkey Scripts
 // @match       https://*.force.com/*
 // @grant       none
 // @run-at document-idle
 // @version     2.4
 // @author      MarioV
-// @description 2/15/2023, 7:36:29 AM
+// @description 8/14/2023
 // ==/UserScript==
 
 //Variables & constants
@@ -19,10 +19,10 @@ const isEnable = { // an object specifying which features are enabled
 	daysWithoutFeedback: true,
 	firstPending: true,
 	lastUpdateBy: true,
-	tarFive: true,
+	tarTwo: true,
 	lastCaseUpdate: true,
 }
-const escalationHours = [24, 48, 72, 96, 115, 120]; // an array of numbers representing the number of hours since escalation that trigger highlighting in certain situations
+const escalationHours = [0, 24, 48, 96, 115, 120]; // an array of numbers representing the number of hours since escalation that trigger highlighting in certain situations
 const daysWithoutUpdate = [15, 20, 25, 30, 35]; // an array of numbers representing the number of days since the last update that trigger highlighting in certain situations
 const lastcustomerHours = [0, 48, 24, 180]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
 
@@ -80,7 +80,7 @@ function updateHighlighting() {
 		"Case Number": "caseNumberCol",
 		"Action needed from": "actionNeededFCol",
 		"Last Modified Date": "lastModifiedCol",
-		"Expert Escalation Age": "expertAgeCol",
+		"Advanced Escalation Age": "advancedAgeCol",
 		"Status": "statusCol",
 		"Last Customer Email Date": "lastCusEmailCol",
 		"Last Reply to Customer Date": "lastReply2CusCol",
@@ -112,12 +112,13 @@ function updateHighlighting() {
 				/////////////////////////////////////Internal variables
 				////////////////////////////////////
 				let isEngineeringBU = tableRows[i + actionNeededFCol].innerHTML.match('Engineering/BU*');
+				let isExpert = tableRows[i + actionNeededFCol].innerHTML.match('Expert*');
 
 				let lastCustEmailDate = new Date(Date.parse(getConvertedDateTime(dateFormatType, tableRows[i + lastCusEmailCol].textContent)));
 				let lastReplyEmailDate = new Date(Date.parse(getConvertedDateTime(dateFormatType, tableRows[i + lastReply2CusCol].textContent)));
 				let lastModifiedDate = new Date(Date.parse(getConvertedDateTime(dateFormatType, tableRows[i + lastModifiedCol].textContent)));
 				let lastModifiedAlias = tableRows[i + lastModiByAliasCol] ? tableRows[i + lastModiByAliasCol].textContent : '';
-				let expertAgeValue = parseFloat(tableRows[i + expertAgeCol].textContent);
+				let advancedAgeValue = parseFloat(tableRows[i + advancedAgeCol].textContent);
 
 				let timeSinceLastResponse = parseFloat((((now - lastCustEmailDate) / 1000) / 3600).toFixed(2));
 				let timeSinceLastCustReply = parseFloat((((now - lastReplyEmailDate) / 1000) / 3600).toFixed(2));
@@ -154,7 +155,7 @@ function updateHighlighting() {
 				}
 
 				//If for days since last update
-				if (isEnable.lastCaseUpdate == true && !isNaN(lastModifiedDate) && isEngineeringBU) {
+				if (isEnable.lastCaseUpdate == true && !isNaN(lastModifiedDate) && isEngineeringBU && isExpert) {
 					var timeLeft = Math.round((now - lastModifiedDate) / 86400000);
 					if (timeLeft >= daysWithoutUpdate[4]) {
 						setColorAndText(0, `${timeLeft} days`, colors.gradient5Color)
@@ -169,19 +170,13 @@ function updateHighlighting() {
 					}
 				}
 
-				// Checks conditions to determine which color and text should be displayed based on the value of "expertAgeValue".
-				if (isEnable.tarFive == true && !isNaN(expertAgeValue) && !isEngineeringBU) {
-					if (expertAgeValue > escalationHours[5]) {
+				// Checks conditions to determine which color and text should be displayed based on the value of "advancedAgeValue" and certain other variables.
+				if (isEnable.tarTwo == true && !isNaN(advancedAgeValue) && !isEngineeringBU && !isExpert) {
+					if (advancedAgeValue > escalationHours[2]) {
 						setColorAndText(0, 'Expired', colors.gray1Color)
-					} else if (expertAgeValue >= escalationHours[3] && expertAgeValue <= escalationHours[5]) {
-						expertAgeValue = (escalationHours[5] - expertAgeValue).toFixed(2);
-						setColorAndText(0, `${expertAgeValue}h left`, colors.gradient5Color)
-					} else if (expertAgeValue >= escalationHours[2] && expertAgeValue <= escalationHours[5]) {
-						setColorAndText(0, `Day 4`, colors.gradient3Color)
-					} else if (expertAgeValue >= escalationHours[1] && expertAgeValue <= escalationHours[5]) {
-						setColorAndText(0, `Day 3`, colors.gradient2Color)
-					} else if (expertAgeValue >= escalationHours[0] && expertAgeValue <= escalationHours[5]) {
-						setColorAndText(0, `Day 2`, colors.gradient1Color)
+					} else if (advancedAgeValue >= escalationHours[1] && advancedAgeValue <= escalationHours[2]) {
+						advancedAgeValue = (escalationHours[2] - advancedAgeValue).toFixed(2);
+						setColorAndText(0, `${advancedAgeValue}h left`, colors.gradient5Color)
 					}
 				}
 			}
