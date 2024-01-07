@@ -4,7 +4,7 @@
 // @match       https://*.force.com/*
 // @grant       none
 // @run-at document-idle
-// @version     2.3
+// @version     2.4
 // @author      MarioV
 // @description 8/14/2023
 // ==/UserScript==
@@ -22,10 +22,9 @@ const isEnable = { // an object specifying which features are enabled
 	tarFive: true,
 	lastCaseUpdate: true,
 }
-
-const daysWithoutUpdate = [15, 20, 25, 30, 35]; // an array of numbers representing the number of days since the last update that trigger highlighting in certain situations
 const escalationHours = [24, 48, 72, 96, 115, 120]; // an array of numbers representing the number of hours since escalation that trigger highlighting in certain situations
-const lastcustomerHours = [0, 48, 24, 1460]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
+const daysWithoutUpdate = [15, 20, 25, 30, 35]; // an array of numbers representing the number of days since the last update that trigger highlighting in certain situations
+const lastcustomerHours = [0, 48, 24, 180]; // an array of numbers representing the number of hours since last customer email that trigger highlighting in certain situations (for Expert/Advanced cases)
 
 //Colors
 var colors = {
@@ -144,10 +143,8 @@ function updateHighlighting() {
 					} else if (isEnable.daysWithoutFeedback == true && timeReplyResponseDif >= lastcustomerHours[0] && timeSinceLastCustReply > lastcustomerHours[2] && timeSinceLastCustReply <= lastcustomerHours[3]) {
 						setColorAndText(blankCol, `${timeSinceLastReplyHM} without feedback from customer`, colors.purple1Color)
 					}
-				}
-
-				//1st response pending only shown for 72 hours.
-				if (isEnable.firstPending == true && lastReplyEmailDate == 'Invalid Date' && timeSinceLastResponseNoWK < 72) {
+				} else if (isEnable.firstPending == true && lastReplyEmailDate == 'Invalid Date' && timeSinceLastResponseNoWK < 72) {
+					//1st response pending only shown for 72 hours.
 					setColorAndText(blankCol, '1st response pending', colors.red1Color)
 				}
 
@@ -172,7 +169,7 @@ function updateHighlighting() {
 					}
 				}
 
-				// Checks conditions to determine which color and text should be displayed based on the value of "expertAgeValue" and certain other variables.
+				// Checks conditions to determine which color and text should be displayed based on the value of "expertAgeValue".
 				if (isEnable.tarFive == true && !isNaN(expertAgeValue) && !isEngineeringBU) {
 					if (expertAgeValue > escalationHours[5]) {
 						setColorAndText(0, 'Expired', colors.gray1Color)
