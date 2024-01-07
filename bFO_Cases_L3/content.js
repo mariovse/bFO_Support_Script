@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        L3 bFO Extras2
+// @name        L3 bFO Extras
 // @namespace   Violentmonkey Scripts
 // @match       https://*.force.com/*
 // @grant       none
